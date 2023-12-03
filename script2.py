@@ -2,6 +2,7 @@ import time
 import os
 import keyboard
 from random import choice, randrange
+from copy import deepcopy
 
 my_map = None
 num_my_map = 1
@@ -110,6 +111,31 @@ def draw_fishing_rod(place, x, y):
 def show_map(my_map) -> None:
     for row in my_map:
         print(''.join(row))
+  
+def write_about_item(place, x, y):  
+    match place[y][x]:
+        case '*': print('gem - usually item \nNeed for crafts')
+        case '#': print('wood - usually item \nNeed for crafts')
+        case 'o': print('stone - usually item \nNeed for crafts')
+
+def choose_x_place(place, slots_x ,y):
+    for n, x in enumerate(range(slots_x-3, slots_x+4)):
+        if place[y][x] == ' ' and n == 0 or place[y][x] == ' ' and n == 6:
+            place[y][x] = '+'
+
+def choose_y_all_x_place(place, choose_slot_x, slot_x, y, slot_y):
+                if choose_slot_x == 1:
+                    choose_x_place(place, slot_x[1-1], y)
+                    # write_about_item(place, slot_x[1-1], slot_y)
+                elif choose_slot_x == 2:
+                    choose_x_place(place, slot_x[2-1], y)
+                    # write_about_item(place, slot_x[2-1], slot_y)
+                elif choose_slot_x == 3:
+                    choose_x_place(place, slot_x[3-1], y)
+                    # write_about_item(place, slot_x[3-1], slot_y)
+                elif choose_slot_x == 4:
+                    choose_x_place(place, slot_x[4-1], y)
+                    # write_about_item(place, slot_x[4-1], slot_y)
 
 create_map()
 
@@ -261,7 +287,7 @@ def settings(user):
                 size_y = int(input('введите высоту карты: '))
             except:
                 print('вы ввели не число')
-        case 'e': os.system('cls||clear'); player_inventary.show_inventary()
+        case 'e': os.system('cls||clear'); player_inventary.check_slots_inventory()
         case 'o':
             user_input = input('введите кол-во предметов на карте: ')
             try:
@@ -412,9 +438,39 @@ class Inventary:
             break
                 
 
-    def show_inventary(self):
+    def show_inventory(self):
         for row in self.inv:
             print(''.join(row))
+    
+    def check_slots_inventory(self):
+        input('нажмите Enter чтобы продолжить \n\n\n\n\n')
+        choose_slot_x = 1
+        choose_slot_y = 1
+        inventory = deepcopy(self.inv)
+        time.sleep(0.3)
+        while True:
+            self.inv = deepcopy(inventory)
+            if choose_slot_y == 1:
+                for y in range(self.slotes_y[1-1]-1, self.slotes_y[1-1]+2):
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[1-1])
+            elif choose_slot_y == 2:
+                for y in range(self.slotes_y[2-1]-1, self.slotes_y[2-1]+2):
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[2-1])
+            elif choose_slot_y == 3:
+                for y in range(self.slotes_y[3-1]-1, self.slotes_y[3-1]+2):
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[3-1])
+            os.system('cls||clear') 
+            self.show_inventory()
+            user1 = keyboard.read_key()
+            self.inv = deepcopy(inventory)
+            match user1.lower():
+                case 'e': break
+                case 'd': choose_slot_x += 1 if choose_slot_x < 4 else 0
+                case 'a': choose_slot_x -= 1 if choose_slot_x > 1 else 0
+                case 'w': choose_slot_y -= 1 if choose_slot_y > 1 else 0
+                case 's': choose_slot_y += 1 if choose_slot_y < 3 else 0
+            time.sleep(0.2)
+        print('нажмите Enter чтобы вернуться')
                 
 #                                 32
 # --------------------------------- 0   
@@ -482,22 +538,7 @@ class Crafts:
             crafts.set_craft_window()
             crafts.set_crafts()
             for y in range(self.slots_y-1, self.slots_y+2):
-                if choose_slot == 1:
-                    for n , x in enumerate(range(self.slots_x[0]-3, self.slots_x[0]+4)):
-                        if self.craft_window[y][x] == ' ' and n == 0 or self.craft_window[y][x] == ' ' and n == 6:
-                                self.craft_window[y][x] = '+'
-                elif choose_slot == 2:
-                    for n, x in enumerate(range(self.slots_x[1]-3, self.slots_x[1]+4)):
-                        if self.craft_window[y][x] == ' ' and n == 0 or self.craft_window[y][x] == ' ' and n == 6:
-                                self.craft_window[y][x] = '+'
-                elif choose_slot == 3:
-                    for n, x in enumerate(range(self.slots_x[2]-3, self.slots_x[2]+4)):
-                        if self.craft_window[y][x] == ' ' and n == 0 or self.craft_window[y][x] == ' ' and n == 6:
-                                self.craft_window[y][x] = '+'
-                elif choose_slot == 4:
-                    for n, x in enumerate(range(self.slots_x[3]-3, self.slots_x[3]+4)):
-                        if self.craft_window[y][x] == ' ' and n == 0 or self.craft_window[y][x] == ' ' and n == 6:
-                                self.craft_window[y][x] = '+'
+                choose_y_all_x_place(self.craft_window, choose_slot, self.slots_x, y, self.slots_y)
             crafts.show_craft()
             time.sleep(0.2)
             if choose_slot == 1:
