@@ -11,7 +11,7 @@ hero = None
 items = None
 player_inventary = None
 player_sword = None
-sword_in_stone = None
+
 crafts = None
 item = ''
 timer = 0
@@ -27,6 +27,7 @@ inventary_size_y = 12
 in_wate_flag = False
 have_sword_flag = False
 in_inventary_flag = False
+sword_in_stone_flag = False
 
 global_time = 0
 
@@ -77,6 +78,18 @@ def draw_sword(place, x, y):
     place[y+2][x+1] = 'r'
     place[y+2][x+2] = 'd'
     
+def draw_sword_2(place, x, y):
+    place[y][x] = '|'
+    place[y+1][x] = '|'
+    place[y][x+1] = '>'  
+    place[y-1][x+1] = '>'
+    place[y-1][x] = '|'    # 
+    place[y+2][x-2] = 'S'   # |>
+    place[y+2][x-1] = 'w'   # |>
+    place[y+2][x] = 'o'     # |
+    place[y+2][x+1] = 'r'   #
+    place[y+2][x+2] = 'd'
+    
 def draw_shield(place, x, y):
     place[y][x] = '_'       #  _
     place[y][x-1] = ')'     # )_)
@@ -117,9 +130,11 @@ def show_map(my_map) -> None:
         print(''.join(row))
   
 def write_about_item(place, x, y): 
-    global text_about_item, item, have_sword_flag
+    global have_sword_flag
+    global text_about_item, item
     
     match place[y][x]:
+        
         case '*': 
             text_about_item = 'gem - common item \nNeed for crafts'
             item = '*'
@@ -132,10 +147,11 @@ def write_about_item(place, x, y):
             text_about_item = 'stone - common item \nNeed for crafts'
             item = 'o'
             have_sword_flag = False
-        case '|': 
-            text_about_item = 'Sword - ? item \nNeed for cuting your enemies'
-            have_sword_flag = True
-    def set_item():
+        case '|' : 
+                text_about_item = 'Sword - ? item \nNeed for cuting your enemies'
+                if sword_in_stone_flag:
+                    have_sword_flag = True
+    def set_item(): 
         hero.hero_item = item
 
     keyboard.add_hotkey('q', set_item)
@@ -159,6 +175,12 @@ def choose_y_all_x_place(place, choose_slot_x, slot_x, y):
                 elif choose_slot_x == 4:
                     choose_x_place(place, slot_x[4-1], y)
                     write_about_item(place, slot_x[4-1], y)
+
+def hero_in_left(hero, speed = 2):
+    global num_my_map
+    if hero.x-1 >0 and global_time % speed == 0:
+        hero.x -= 1
+
 
 create_map()
 
@@ -220,9 +242,12 @@ class Hero:     # main character
         self.y = y
         self.hero_item = ''
     def set_hero(self):
+        global num_my_map
         if not (num_my_map >= 2 and self.y < size_y // 3):
             my_map[self.y+1][self.x+1] = '\\' 
             my_map[self.y+1][self.x-1] = '/'
+        else:
+            hero_in_left(hero)
         my_map[self.y][self.x] = '|'
         my_map[self.y][self.x-1] = '/'          #  O 
         my_map[self.y][self.x+1] = '\\'         # /|\
@@ -261,7 +286,7 @@ class Hero:     # main character
             self.x -= 2
                     
     def check_item(self, item, inventary):
-        global count_stones, count_woods, count_gems, count_items_player, player_sword, have_sword_flag
+        global count_stones, count_woods, count_gems, count_items_player, player_sword, have_sword_flag, sword_in_stone_flag
         if self.x == item.x and self.y+1 == item.y or self.x-1 == item.x and self.y+1 == item.y or self.x+1 == item.x and self.y+1 == item.y:
             if item.check_flag:
                 if item.simvol != '|':
@@ -293,6 +318,7 @@ class Hero:     # main character
                         time.sleep(0.2)
                         self.hero_item = item.simvol
                         inventary.add_item(item.simvol)
+                        sword_in_stone_flag = True
                         item.check_flag = False 
                         have_sword_flag = True
                         os.system('cls||clear')
@@ -546,7 +572,7 @@ class Crafts:
                 if index == 1:                              
                     draw_bow(self.craft_window, x, y)
                 if index == 2:
-                    draw_sword(self.craft_window, x, y)
+                    draw_sword_2(self.craft_window, x, y)
                 if index == 3:
                     draw_fishing_rod(self.craft_window, x, y)
                     
