@@ -290,6 +290,7 @@ class Hero:     # main character
                     time.sleep(3)
                     print(text_equip_queshion)
                     if keyboard.read_key().lower() == 'q':
+                        time.sleep(0.2)
                         self.hero_item = item.simvol
                         inventary.add_item(item.simvol)
                         item.check_flag = False 
@@ -609,7 +610,7 @@ def game():
     global global_time
     first_start()
     while True:
-        time.sleep(0.1)
+        time.sleep(0.13)
         
         if keyboard.is_pressed('w'):
             hero.hero_move_up()
