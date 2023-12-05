@@ -4,6 +4,7 @@ import keyboard
 from random import choice, randrange
 from copy import deepcopy
 
+# sudo python3 script2.py - for linux
 my_map = None
 num_my_map = 1
 hero = None
@@ -12,6 +13,7 @@ player_inventary = None
 player_sword = None
 sword_in_stone = None
 crafts = None
+item = ''
 timer = 0
 size_x = 60
 size_y = 10
@@ -26,7 +28,9 @@ in_wate_flag = False
 have_sword_flag = False
 in_inventary_flag = False
 
+global_time = 0
 
+text_about_item = ''
 text_sword_in_stone_1= """
 «Идя вдоль реки вы видите странное образование,
 удалённо напопинающее могилу, за исключением одного,
@@ -112,30 +116,49 @@ def show_map(my_map) -> None:
     for row in my_map:
         print(''.join(row))
   
-def write_about_item(place, x, y):  
+def write_about_item(place, x, y): 
+    global text_about_item, item, have_sword_flag
+    
     match place[y][x]:
-        case '*': print('gem - usually item \nNeed for crafts')
-        case '#': print('wood - usually item \nNeed for crafts')
-        case 'o': print('stone - usually item \nNeed for crafts')
+        case '*': 
+            text_about_item = 'gem - common item \nNeed for crafts'
+            item = '*'
+            have_sword_flag = False
+        case '#': 
+            text_about_item = 'wood - common item \nNeed for crafts'
+            item = '#'
+            have_sword_flag = False
+        case 'o': 
+            text_about_item = 'stone - common item \nNeed for crafts'
+            item = 'o'
+            have_sword_flag = False
+        case '|': 
+            text_about_item = 'Sword - ? item \nNeed for cuting your enemies'
+            have_sword_flag = True
+    def set_item():
+        hero.hero_item = item
+
+    keyboard.add_hotkey('q', set_item)
+  
 
 def choose_x_place(place, slots_x ,y):
     for n, x in enumerate(range(slots_x-3, slots_x+4)):
         if place[y][x] == ' ' and n == 0 or place[y][x] == ' ' and n == 6:
             place[y][x] = '+'
 
-def choose_y_all_x_place(place, choose_slot_x, slot_x, y, slot_y):
+def choose_y_all_x_place(place, choose_slot_x, slot_x, y):
                 if choose_slot_x == 1:
                     choose_x_place(place, slot_x[1-1], y)
-                    # write_about_item(place, slot_x[1-1], slot_y)
+                    write_about_item(place, slot_x[1-1], y)
                 elif choose_slot_x == 2:
                     choose_x_place(place, slot_x[2-1], y)
-                    # write_about_item(place, slot_x[2-1], slot_y)
+                    write_about_item(place, slot_x[2-1], y)
                 elif choose_slot_x == 3:
                     choose_x_place(place, slot_x[3-1], y)
-                    # write_about_item(place, slot_x[3-1], slot_y)
+                    write_about_item(place, slot_x[3-1], y)
                 elif choose_slot_x == 4:
                     choose_x_place(place, slot_x[4-1], y)
-                    # write_about_item(place, slot_x[4-1], slot_y)
+                    write_about_item(place, slot_x[4-1], y)
 
 create_map()
 
@@ -206,36 +229,36 @@ class Hero:     # main character
         my_map[self.y-1][self.x] = 'o'          # / \
         if not self.hero_item == '' and not have_sword_flag:
             my_map[self.y][self.x+2] = self.hero_item
-    def hero_move(self, move: str):
+        
+    def hero_move_down(self): # s
+        if self.y+1 < len(my_map)-1:
+            self.y += 1
+        else:
+            self.y = 1
+    def hero_move_up(self): # w
+        if self.y < 0:
+            self.y = len(my_map)-2
+        else:
+            self.y -= 1
+    def hero_move_right(self): # d
         global num_my_map
-        match move.lower():
-            case 's':
-                if self.y+1 < len(my_map)-1:
-                    self.y += 1
-                else:
-                    self.y = 1
-            case 'w':
-                if self.y < 0:
-                    self.y = len(my_map)-2
-                else:
-                    self.y -= 1
-            case 'd':
-                if self.x+3 < len(my_map[0])-1 and not have_sword_flag:
-                    self.x += 2
-                elif self.x+4 < len(my_map[0])-1 and have_sword_flag:
-                    self.x += 2
-                else:   
-                    num_my_map += 1
-                    self.x = 2  
-            case 'a':
-                if self.x-3 < 0:
-                    if not have_sword_flag:
-                        self.x = len(my_map[0])-4
-                    else:
-                        self.x = len(my_map[0])-5
-                    num_my_map -= 1
-                else:
-                    self.x -= 2
+        if self.x+3 < len(my_map[0])-1 and not have_sword_flag:
+            self.x += 2
+        elif self.x+4 < len(my_map[0])-1 and have_sword_flag:
+            self.x += 2
+        else:   
+            num_my_map += 1
+            self.x = 2  
+    def hero_move_left(self): # a
+        global num_my_map
+        if self.x-3 < 0:
+            if not have_sword_flag:
+                self.x = len(my_map[0])-4
+            else:
+                self.x = len(my_map[0])-5
+            num_my_map -= 1
+        else:
+            self.x -= 2
                     
     def check_item(self, item, inventary):
         global count_stones, count_woods, count_gems, count_items_player, player_sword, have_sword_flag
@@ -247,20 +270,20 @@ class Hero:     # main character
                     item.check_flag = False 
                     match item.simvol:
                         case "#":
-                            print('u pick up wood!')
+                            # print('u pick up wood!')
                             count_woods +=1
                             count_items_player += 1
-                            print(f'woods: {count_woods}')
+                            # print(f'woods: {count_woods}')
                         case "o":
-                            print('u pick up stone!')
+                            # print('u pick up stone!')
                             count_stones +=1
                             count_items_player += 1
-                            print(f'stones : {count_stones}')
+                            # print(f'stones : {count_stones}')
                         case '*':
-                            print('u pick up gem!')
+                            # print('u pick up gem!')
                             count_gems += 1
                             count_items_player += 1
-                            print(f'gems: {count_gems}')
+                            # print(f'gems: {count_gems}')
                         
                 elif item.simvol == '|':
                     print(text_sword_in_stone_1)
@@ -307,10 +330,10 @@ class Sword:
     def set_item(self, map):
         if have_sword_flag:
             map[self.y][self.x] = '!'
-            map[self.y-1][self.x -1] = '_'  #   |
+            map[self.y-1][self.x -1] = '_'  
             map[self.y-1][self.x +1] = '_'  #   |
-            map[self.y-2][self.x] = '|'     #  ___ 
-            map[self.y-1][self.x] = '|'     #   |
+            map[self.y-2][self.x] = '|'     #  _|_ 
+            map[self.y-1][self.x] = '|'     #   !
         
 
 
@@ -393,7 +416,7 @@ class Inventary:
                     self.inv[y][x] = item
                     match item:
                         case '*':
-                            if 0 < count_gems < 10:
+                            if 0 < count_gems < 9:
                                 self.inv[y+1][x+3] = str(count_gems+1)
                             elif 9 < count_gems < 100:
                                 self.inv[y+1][x+3] = str(count_gems+1)
@@ -403,7 +426,7 @@ class Inventary:
                             self.inv[y+2][x] = 'm'
                             self.inv[y+2][x+1] = 's'
                         case '#':
-                            if 0 < count_woods < 10:
+                            if 0 < count_woods < 9:
                                 self.inv[y+1][x+3] = str(count_woods+1)
                             elif 9 < count_woods < 100:
                                 self.inv[y+1][x+3] = str(count_woods+1)
@@ -414,7 +437,7 @@ class Inventary:
                             self.inv[y+2][x+1] = 'd'
                             self.inv[y+2][x+2] = 's'
                         case 'o':
-                            if 0 < count_stones < 10:
+                            if 0 < count_stones < 9:
                                 self.inv[y+1][x+3] = str(count_stones+1)
                             elif 9 < count_stones < 100:
                                 self.inv[y+1][x+3] = str(count_stones+1)
@@ -452,15 +475,18 @@ class Inventary:
             self.inv = deepcopy(inventory)
             if choose_slot_y == 1:
                 for y in range(self.slotes_y[1-1]-1, self.slotes_y[1-1]+2):
-                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[1-1])
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y)
             elif choose_slot_y == 2:
                 for y in range(self.slotes_y[2-1]-1, self.slotes_y[2-1]+2):
-                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[2-1])
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y)
             elif choose_slot_y == 3:
                 for y in range(self.slotes_y[3-1]-1, self.slotes_y[3-1]+2):
-                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y, self.slotes_y[3-1])
+                    choose_y_all_x_place(self.inv, choose_slot_x, self.slotes_x, y)
             os.system('cls||clear') 
+            print('чтобы выйти нажмите E')
             self.show_inventory()
+            print(text_about_item)
+            print('press q for choose item                                  ')
             user1 = keyboard.read_key()
             self.inv = deepcopy(inventory)
             match user1.lower():
@@ -470,7 +496,8 @@ class Inventary:
                 case 'w': choose_slot_y -= 1 if choose_slot_y > 1 else 0
                 case 's': choose_slot_y += 1 if choose_slot_y < 3 else 0
             time.sleep(0.2)
-        print('нажмите Enter чтобы вернуться')
+        os.system('cls||clear') 
+        show_map(my_map)
                 
 #                                 32
 # --------------------------------- 0   
@@ -535,10 +562,11 @@ class Crafts:
         choose_slot = 1
         while True:
             crafts.print_text_menu()
+            print('чтобы выйти нажмите R')
             crafts.set_craft_window()
             crafts.set_crafts()
             for y in range(self.slots_y-1, self.slots_y+2):
-                choose_y_all_x_place(self.craft_window, choose_slot, self.slots_x, y, self.slots_y)
+                choose_y_all_x_place(self.craft_window, choose_slot, self.slots_x, y)
             crafts.show_craft()
             time.sleep(0.2)
             if choose_slot == 1:
@@ -571,35 +599,46 @@ class Crafts:
                 case 'r': break
                 case 'd': choose_slot += 1 if choose_slot < 4 else 0
                 case 'a': choose_slot -= 1 if choose_slot > 1 else 0
-        print('нажмите Enter чтобы вернуться')
+        os.system('cls||clear')
+        show_map(my_map)
         
                         
                     
         
 def game():
+    global global_time
     first_start()
     while True:
         time.sleep(0.1)
-        user = keyboard.read_key()
-        if user.lower() not in 'wasd':
-            settings(user)
-        elif user.lower() == 'esc': break
-        else:
-            os.system('cls||clear') # clear consol
-            hero.hero_move(user)
-            spawn_items()
-            create_map(size_x, size_y,  num_map=num_my_map)
-            if num_my_map >=2:
-                hero.check_item(sword_in_stone, player_inventary)
-            sword_in_stone.set_item(my_map)
-            player_sword.check_collect(hero)
-            player_sword.set_item(my_map)
-            set_items(items) # set items
-            hero.set_hero()
-            show_map(my_map)
-            check_items(hero, items, player_inventary) # check items
+        
+        if keyboard.is_pressed('w'):
+            hero.hero_move_up()
+        elif keyboard.is_pressed('s'):
+            hero.hero_move_down()
+        elif keyboard.is_pressed('a'):
+            hero.hero_move_left()
+        elif keyboard.is_pressed('d'):
+            hero.hero_move_right()
+        elif keyboard.is_pressed('e'):
+            player_inventary.check_slots_inventory()
+        elif keyboard.is_pressed('r'):
+            crafts.check_choose_slots()
+        os.system('cls||clear') # clear consol
+        spawn_items()
+        create_map(size_x, size_y,  num_map=num_my_map)
+        if num_my_map >=2:
+            hero.check_item(sword_in_stone, player_inventary)
+        sword_in_stone.set_item(my_map)
+        player_sword.check_collect(hero)
+        player_sword.set_item(my_map)
+        set_items(items) # set items
+        hero.set_hero()
+        show_map(my_map)
+        check_items(hero, items, player_inventary) # check items
+        global_time += 1
             
             
 if __name__ == '__main__':
     game()
     
+# sudo python3 script2.py - for linux
